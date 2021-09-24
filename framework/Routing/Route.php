@@ -21,7 +21,7 @@ class Route
 
     public function dispatch()
     {
-
+        return call_user_func($this->handler);
     }
 
     public function method(): string

@@ -5,6 +5,7 @@ namespace Framework\Routing;
 class Router
 {
     public array $routes = [];
+    protected array $errorHandlers = [];
 
     public function add(string $method, string $path, callable $handler): Route
     {
@@ -14,9 +15,10 @@ class Router
 
     public function redirect(string $path)
     {
-        //todo implementation is coming soon
-
-        return fn() => 'redirect';
+        header(
+            "Location: {$path}", $replace = true, $code = 301
+        );
+        exit;
     }
 
     public function dispatch()
@@ -24,26 +26,33 @@ class Router
         $paths = $this->paths();
         $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $requestPath = $_SERVER['REQUEST_URI'] ?? '/';
-
         $matching = $this->match($requestMethod, $requestPath);
+
         if ($matching) {
             try {
                 return $matching->dispatch();
             } catch (\Throwable $exception) {
-                $this->dispatchError();
+                return $this->dispatchError();
             }
         }
 
         if (in_array($requestPath, $paths)) {
-            return $this->dispatchNotAllowed();
+            return $this->dispatchNotAllowed($requestMethod);
         }
 
         return $this->dispatchNotFound();
     }
 
-    public function dispatchNotAllowed()
+    public function dispatchNotAllowed($requestMethod)
     {
-        return fn() => 'Not allowed';
+        $this->errorHandlers[400] ??= fn() => "$requestMethod is Not allowed for this route";
+
+        return $this->errorHandlers[400]();
+    }
+
+    public function dummy()
+    {
+        return 'dummy';
     }
 
     private function paths(): array
@@ -61,12 +70,20 @@ class Router
         return null;
     }
 
+    public function errorHandler(int $code, callable $handler)
+    {
+        $this->errorHandlers[$code] = $handler;
+    }
+
     private function dispatchError()
     {
+        $this->errorHandlers[500] ??= fn() => 'Server error';
+        return $this->errorHandlers[500]();
     }
 
     private function dispatchNotFound()
     {
-
+        $this->errorHandlers[404] ??= fn() => 'Not found';
+        return $this->errorHandlers[404]();
     }
 }

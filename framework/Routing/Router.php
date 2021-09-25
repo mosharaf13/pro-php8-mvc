@@ -6,6 +6,15 @@ class Router
 {
     public array $routes = [];
     protected array $errorHandlers = [];
+    protected Route $current;
+
+    /**
+     * @return Route
+     */
+    public function current(): Route
+    {
+        return $this->current;
+    }
 
     public function add(string $method, string $path, callable $handler): Route
     {
@@ -64,6 +73,7 @@ class Router
     {
         foreach ($this->routes as $route) {
             if ($route->matches($requestMethod, $requestPath)) {
+                $this->current = $route;
                 return $route;
             }
         }
@@ -86,4 +96,6 @@ class Router
         $this->errorHandlers[404] ??= fn() => 'Not found';
         return $this->errorHandlers[404]();
     }
+
+
 }

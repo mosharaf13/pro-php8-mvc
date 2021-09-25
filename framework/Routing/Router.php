@@ -1,5 +1,6 @@
 <?php
 
+
 namespace Framework\Routing;
 
 class Router
@@ -95,6 +96,33 @@ class Router
     {
         $this->errorHandlers[404] ??= fn() => 'Not found';
         return $this->errorHandlers[404]();
+    }
+
+    public function route(string $name, array $parameters = []): string
+    {
+        foreach ($this->routes as $route) {
+            if ($route->name() === $name) {
+                $finds = [];
+                $replaces = [];
+                foreach ($parameters as $key => $value) {
+                    // one set for required parameters
+                    array_push($finds, "{{$key}}");
+                    array_push($replaces, $value);
+                    // ...and another for optional parameters
+                    array_push($finds, "{{$key}?}");
+                    array_push($replaces, $value);
+                }
+                $path = $route->path();
+                $path = str_replace($finds, $replaces, $path);
+                // remove any optional parameters not provided
+                $path = preg_replace('#{[^}]+}#', '', $path);
+                // we should think about warning if a required
+                // parameter hasn't been provided...
+
+                return $path;
+            }
+        }
+        throw new Exception('no route with that name');
     }
 
 

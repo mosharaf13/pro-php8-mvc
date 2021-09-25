@@ -8,7 +8,7 @@ class Route
     protected string $path;
     protected $handler;
     protected array $parameters = [];
-
+    protected ?string $name = null;
 
     public function __construct(
         string   $method,
@@ -141,5 +141,14 @@ class Route
     public function parameters(): array
     {
         return $this->parameters;
+    }
+
+    public function name(string $name = null)
+    {
+        if ($name) {
+            $this->name = $name;
+            return $this;
+        }
+        return $this->name;
     }
 }
